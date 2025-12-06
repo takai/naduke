@@ -260,7 +260,8 @@ func GenerateNameWithRetry(gen Generator, model string, temperature float64, top
 		if err != nil {
 			return "", err
 		}
-		trimmed, err := ValidateSuggestion(raw)
+		sanitized := SanitizeName(raw)
+		trimmed, err := ValidateSuggestion(sanitized)
 		if err != nil {
 			lastErr = err
 			continue

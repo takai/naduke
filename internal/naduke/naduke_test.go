@@ -247,19 +247,26 @@ func TestGenerateNameWithRetry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if raw != "good_name" {
+	if raw != "bad_name" {
 		t.Fatalf("unexpected suggestion: %q", raw)
+	}
+	if gen.index != 1 {
+		t.Fatalf("expected to stop after first sanitized suggestion, calls: %d", gen.index)
 	}
 }
 
-func TestGenerateNameWithRetryFails(t *testing.T) {
+func TestGenerateNameWithRetrySanitizesEmptyResult(t *testing.T) {
 	t.Parallel()
 
 	gen := &stubGenerator{
-		responses: []string{"bad name", "still bad"},
+		responses: []string{"   "},
 	}
-	if _, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 2); err == nil {
-		t.Fatalf("expected failure when all attempts invalid")
+	raw, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if raw != "file" {
+		t.Fatalf("expected default sanitized name, got %q", raw)
 	}
 }
 
