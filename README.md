@@ -4,7 +4,13 @@ CLI tool that guesses better file names from file content using a local Ollama m
 
 ## Requirements
 - Go 1.22+
-- Running Ollama server with access to `granite4:3b-h` (or a model you specify).
+- Ollama installed and running locally or remotely.
+- The model `granite4:3b-h` available in Ollama (or another model you specify).
+
+### Model download (granite4:3b-h)
+```sh
+ollama pull granite4:3b-h
+```
 
 ## Installation
 ```sh
