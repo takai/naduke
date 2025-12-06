@@ -23,7 +23,7 @@ const (
 	DefaultTopK          = 1
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
-	DefaultRetries       = 5
+	DefaultRetries       = 0
 	readBytes            = 8 * 1024
 )
 
