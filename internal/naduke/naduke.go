@@ -23,6 +23,7 @@ const (
 	DefaultTopK          = 1
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
+	DefaultPrefix        = ""
 	readChars            = 1000
 )
 
@@ -58,6 +59,7 @@ type Options struct {
 	TopP          float64
 	RepeatPenalty float64
 	DryRun        bool
+	Prefix        string
 }
 
 type client struct {
@@ -229,6 +231,14 @@ func SanitizeName(raw string) string {
 		return "file"
 	}
 	return name
+}
+
+// ApplyPrefix prepends a user-provided prefix to the already sanitized name.
+func ApplyPrefix(prefix, name string) string {
+	if prefix == "" {
+		return name
+	}
+	return prefix + name
 }
 
 func DestinationPath(path, newName string) string {

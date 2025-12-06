@@ -38,6 +38,31 @@ func TestSanitizeName(t *testing.T) {
 	}
 }
 
+func TestApplyPrefix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		prefix string
+		name   string
+		want   string
+	}{
+		{"", "note", "note"},
+		{"proj_", "note", "proj_note"},
+		{"UPPER", "name", "UPPERname"},
+		{"pre-fix_", "name", "pre-fix_name"},
+		{"longprefixvalue_", strings.Repeat("a", 25), "longprefixvalue_" + strings.Repeat("a", 25)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.prefix+"-"+tt.name, func(t *testing.T) {
+			got := ApplyPrefix(tt.prefix, tt.name)
+			if got != tt.want {
+				t.Fatalf("ApplyPrefix(%q, %q) = %q; want %q", tt.prefix, tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestEnsureTextSample(t *testing.T) {
 	t.Parallel()
 

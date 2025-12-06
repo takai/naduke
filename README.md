@@ -32,6 +32,7 @@ Options (from `naduke -h`):
 - `-top_p` Top-p sampling (default: `1.0`)
 - `-repeat_penalty` Repeat penalty (default: `1.0`)
 - `-dry-run` Show suggested names without renaming (note: actual rename run may produce a different suggestion because LLM outputs can vary)
+- `-prefix` Prefix to prepend to the generated name
 - `-h`, `-help` Show help
 
 Examples:
@@ -44,6 +45,9 @@ naduke docs/*.md
 
 # Custom server URL
 naduke -server http://ollama.example.com:11434 draft.txt
+
+# Add a prefix to suggestions
+naduke -prefix meeting_ notes.txt
 ```
 
 ## Behavior
@@ -54,6 +58,7 @@ naduke -server http://ollama.example.com:11434 draft.txt
 - Fails if the destination already exists.
 - Dry-run prints suggestions only; due to LLM variability, a later non-dry run might produce a different name.
 - Validates model output against naming rules (single token, lowercase a-z0-9_, max 30 chars, no extension).
+- Applies an optional prefix as provided, then appends the model output.
 
 Parameter notes (you do not usually need to change these):
 - `temperature`: Controls randomness/creativity. Higher = more varied suggestions; lower = safer/more deterministic.
