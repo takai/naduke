@@ -16,10 +16,14 @@ import (
 )
 
 const (
-	DefaultModel = "granite4:3b-h"
-	DefaultHost  = "localhost"
-	DefaultPort  = 11434
-	readBytes    = 8 * 1024
+	DefaultModel         = "granite4:3b-h"
+	DefaultHost          = "localhost"
+	DefaultPort          = 11434
+	DefaultTemperature   = 0.0
+	DefaultTopK          = 1
+	DefaultTopP          = 1.0
+	DefaultRepeatPenalty = 1.0
+	readBytes            = 8 * 1024
 )
 
 var (
@@ -44,10 +48,14 @@ Generate an appropriate file name for this text file content.
 )
 
 type Options struct {
-	Host   string
-	Port   int
-	Server string
-	Model  string
+	Host          string
+	Port          int
+	Server        string
+	Model         string
+	Temperature   float64
+	TopK          int
+	TopP          float64
+	RepeatPenalty float64
 }
 
 type client struct {
@@ -59,6 +67,14 @@ type chatRequest struct {
 	Model    string        `json:"model"`
 	Messages []chatMessage `json:"messages"`
 	Stream   bool          `json:"stream"`
+	Options  chatOptions   `json:"options"`
+}
+
+type chatOptions struct {
+	Temperature   float64 `json:"temperature"`
+	TopK          int     `json:"top_k"`
+	TopP          float64 `json:"top_p"`
+	RepeatPenalty float64 `json:"repeat_penalty"`
 }
 
 type chatMessage struct {
@@ -102,7 +118,7 @@ func buildURI(opts Options) (*url.URL, error) {
 	}, nil
 }
 
-func (c *client) GenerateName(model, content string) (string, error) {
+func (c *client) GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error) {
 	reqBody := chatRequest{
 		Model: model,
 		Messages: []chatMessage{
@@ -110,6 +126,12 @@ func (c *client) GenerateName(model, content string) (string, error) {
 			{Role: "user", Content: fmt.Sprintf(userPrompt, content)},
 		},
 		Stream: false,
+		Options: chatOptions{
+			Temperature:   temperature,
+			TopK:          topK,
+			TopP:          topP,
+			RepeatPenalty: repeatPenalty,
+		},
 	}
 
 	payload, err := json.Marshal(reqBody)

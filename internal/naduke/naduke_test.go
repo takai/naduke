@@ -127,6 +127,18 @@ func TestGenerateName(t *testing.T) {
 		if payload.Model != "test-model" {
 			t.Fatalf("unexpected model: %s", payload.Model)
 		}
+		if payload.Options.Temperature != 0.5 {
+			t.Fatalf("unexpected temperature: %v", payload.Options.Temperature)
+		}
+		if payload.Options.TopK != 3 {
+			t.Fatalf("unexpected top_k: %v", payload.Options.TopK)
+		}
+		if payload.Options.TopP != 0.9 {
+			t.Fatalf("unexpected top_p: %v", payload.Options.TopP)
+		}
+		if payload.Options.RepeatPenalty != 1.2 {
+			t.Fatalf("unexpected repeat_penalty: %v", payload.Options.RepeatPenalty)
+		}
 		resp := chatResponse{
 			Message: &chatMessage{
 				Role:    "assistant",
@@ -149,7 +161,7 @@ func TestGenerateName(t *testing.T) {
 		uri:  &url.URL{Scheme: "http", Host: "example.com", Path: "/api/chat"},
 	}
 
-	name, err := client.GenerateName("test-model", "hello")
+	name, err := client.GenerateName("test-model", 0.5, 3, 0.9, 1.2, "hello")
 	if err != nil {
 		t.Fatalf("GenerateName error: %v", err)
 	}

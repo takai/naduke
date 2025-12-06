@@ -18,9 +18,13 @@ func usage(fs *flag.FlagSet) func() {
 
 func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, error) {
 	opts := naduke.Options{
-		Host:  naduke.DefaultHost,
-		Port:  naduke.DefaultPort,
-		Model: naduke.DefaultModel,
+		Host:          naduke.DefaultHost,
+		Port:          naduke.DefaultPort,
+		Model:         naduke.DefaultModel,
+		Temperature:   naduke.DefaultTemperature,
+		TopK:          naduke.DefaultTopK,
+		TopP:          naduke.DefaultTopP,
+		RepeatPenalty: naduke.DefaultRepeatPenalty,
 	}
 
 	fs := flag.NewFlagSet("naduke", flag.ContinueOnError)
@@ -34,6 +38,10 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 	fs.IntVar(&opts.Port, "port", opts.Port, "Ollama port (default: "+fmt.Sprint(opts.Port)+")")
 	fs.StringVar(&opts.Server, "server", "", "Full Ollama server URL (overrides host/port)")
 	fs.StringVar(&opts.Model, "model", opts.Model, "Model name (default: "+opts.Model+")")
+	fs.Float64Var(&opts.Temperature, "temperature", opts.Temperature, "Sampling temperature (default: 0.0)")
+	fs.IntVar(&opts.TopK, "top_k", opts.TopK, "Top-k sampling (default: 1)")
+	fs.Float64Var(&opts.TopP, "top_p", opts.TopP, "Top-p sampling (default: 1.0)")
+	fs.Float64Var(&opts.RepeatPenalty, "repeat_penalty", opts.RepeatPenalty, "Repeat penalty (default: 1.0)")
 
 	if err := fs.Parse(args); err != nil {
 		return opts, nil, false, fs, err
@@ -88,7 +96,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		rawName, err := client.GenerateName(opts.Model, text)
+		rawName, err := client.GenerateName(opts.Model, opts.Temperature, opts.TopK, opts.TopP, opts.RepeatPenalty, text)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
