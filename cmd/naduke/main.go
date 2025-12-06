@@ -25,6 +25,7 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 		TopK:          naduke.DefaultTopK,
 		TopP:          naduke.DefaultTopP,
 		RepeatPenalty: naduke.DefaultRepeatPenalty,
+		DryRun:        false,
 	}
 
 	fs := flag.NewFlagSet("naduke", flag.ContinueOnError)
@@ -42,6 +43,7 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 	fs.IntVar(&opts.TopK, "top_k", opts.TopK, "Top-k sampling (default: 1)")
 	fs.Float64Var(&opts.TopP, "top_p", opts.TopP, "Top-p sampling (default: 1.0)")
 	fs.Float64Var(&opts.RepeatPenalty, "repeat_penalty", opts.RepeatPenalty, "Repeat penalty (default: 1.0)")
+	fs.BoolVar(&opts.DryRun, "dry-run", opts.DryRun, "Show suggested names without renaming")
 
 	if err := fs.Parse(args); err != nil {
 		return opts, nil, false, fs, err
@@ -103,6 +105,13 @@ func main() {
 		}
 
 		newName := naduke.SanitizeName(rawName)
+		destination := naduke.DestinationPath(path, newName)
+
+		if opts.DryRun {
+			fmt.Printf("%s -> %s\n", path, destination)
+			continue
+		}
+
 		if err := naduke.RenameFile(path, newName); err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)

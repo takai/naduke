@@ -113,6 +113,18 @@ func TestRenameFile(t *testing.T) {
 	}
 }
 
+func TestDestinationPath(t *testing.T) {
+	t.Parallel()
+
+	path := "/tmp/example/note.txt"
+	dest := DestinationPath(path, "suggested_name")
+
+	want := "/tmp/example/suggested_name.txt"
+	if dest != want {
+		t.Fatalf("DestinationPath = %q; want %q", dest, want)
+	}
+}
+
 func TestGenerateName(t *testing.T) {
 	t.Parallel()
 

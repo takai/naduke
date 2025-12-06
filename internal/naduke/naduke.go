@@ -56,6 +56,7 @@ type Options struct {
 	TopK          int
 	TopP          float64
 	RepeatPenalty float64
+	DryRun        bool
 }
 
 type client struct {
@@ -220,10 +221,14 @@ func SanitizeName(raw string) string {
 	return name
 }
 
-func RenameFile(path, newName string) error {
+func DestinationPath(path, newName string) string {
 	dir := filepath.Dir(path)
 	ext := filepath.Ext(path)
-	destination := filepath.Join(dir, newName+ext)
+	return filepath.Join(dir, newName+ext)
+}
+
+func RenameFile(path, newName string) error {
+	destination := DestinationPath(path, newName)
 
 	absSrc, err := filepath.Abs(path)
 	if err != nil {
