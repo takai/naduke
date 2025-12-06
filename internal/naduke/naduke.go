@@ -186,12 +186,22 @@ func ReadSample(path string) (string, error) {
 	}
 	defer f.Close()
 
-	buf := make([]byte, readBytes)
+	buf := make([]byte, readBytes+utf8.UTFMax)
 	n, err := f.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return "", fmt.Errorf("read file: %w", err)
 	}
-	return string(buf[:n]), nil
+
+	limit := n
+	if limit > readBytes {
+		limit = readBytes
+	}
+	sample := buf[:limit]
+	for len(sample) > 0 && !utf8.Valid(sample) {
+		sample = sample[:len(sample)-1]
+	}
+
+	return string(sample), nil
 }
 
 func EnsureTextSample(sample string, path string) (string, error) {

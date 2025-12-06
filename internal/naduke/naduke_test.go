@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestSanitizeName(t *testing.T) {
@@ -78,6 +79,31 @@ func TestReadSample(t *testing.T) {
 	}
 	if sample != content[:readBytes] {
 		t.Fatalf("sample does not match expected prefix")
+	}
+}
+
+func TestReadSampleUTF8Boundary(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "file.txt")
+
+	// Place a multibyte rune so it would be split if we naively cut at readBytes.
+	prefix := strings.Repeat("a", readBytes-1)
+	content := prefix + "é" // 'é' is 2 bytes
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	sample, err := ReadSample(path)
+	if err != nil {
+		t.Fatalf("ReadSample error: %v", err)
+	}
+	if !utf8.ValidString(sample) {
+		t.Fatalf("sample should be valid UTF-8")
+	}
+	if len(sample) != readBytes-1 {
+		t.Fatalf("expected trimmed length %d, got %d", readBytes-1, len(sample))
 	}
 }
 
