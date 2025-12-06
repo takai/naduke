@@ -24,7 +24,7 @@ const (
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
 	DefaultRetries       = 0
-	readBytes            = 8 * 1024
+	readBytes            = 1024
 )
 
 var (

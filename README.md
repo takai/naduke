@@ -48,7 +48,7 @@ naduke --server http://ollama.example.com:11434 draft.txt
 ```
 
 ## Behavior
-- Reads first 8KB; aborts on NUL bytes or invalid UTF-8.
+- Reads first 1KB; aborts on NUL bytes or invalid UTF-8.
 - Sends system/user prompts to `/api/chat` (no streaming).
 - Sanitizes model output; if empty after sanitization, uses `file`.
 - Keeps the original extension (e.g., `draft.md` -> `summary.md`).
