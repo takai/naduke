@@ -56,7 +56,7 @@ naduke --server http://ollama.example.com:11434 draft.txt
 - Dry-run prints suggestions only; due to LLM variability, a later non-dry run might produce a different name.
 - Validates model output against naming rules (single token, lowercase a-z0-9_, max 30 chars, no extension); retries up to the configured limit if invalid.
 
-Parameter notes (for general users):
+Parameter notes (you do not usually need to change these):
 - `temperature`: Controls randomness/creativity. Higher = more varied suggestions; lower = safer/more deterministic.
 - `top_k`: Limits candidates to the top-K tokens before sampling. Lower = conservative; higher = more diverse.
 - `top_p`: Nucleus sampling; keeps the smallest set of tokens whose cumulative probability ≥ `top_p`. Higher = more diverse; lower = more focused.
