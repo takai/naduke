@@ -23,6 +23,7 @@ const (
 	DefaultTopK          = 1
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
+	DefaultRetries       = 5
 	readBytes            = 8 * 1024
 )
 
@@ -45,6 +46,7 @@ Generate an appropriate file name for this text file content.
 </content>
 `)
 	invalidChars = regexp.MustCompile(`[^a-z0-9_]`)
+	namePattern  = regexp.MustCompile(`^[a-z0-9_]{1,30}$`)
 )
 
 type Options struct {
@@ -57,6 +59,7 @@ type Options struct {
 	TopP          float64
 	RepeatPenalty float64
 	DryRun        bool
+	Retries       int
 }
 
 type client struct {
@@ -225,6 +228,46 @@ func DestinationPath(path, newName string) string {
 	dir := filepath.Dir(path)
 	ext := filepath.Ext(path)
 	return filepath.Join(dir, newName+ext)
+}
+
+// ValidateSuggestion ensures the raw model output follows the naming rules strictly.
+// It returns the trimmed suggestion if valid.
+func ValidateSuggestion(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", errors.New("empty suggestion")
+	}
+	if !namePattern.MatchString(trimmed) {
+		return "", fmt.Errorf("suggestion %q does not match required pattern %s", trimmed, namePattern.String())
+	}
+	return trimmed, nil
+}
+
+// Generator abstracts model calls for retry logic.
+type Generator interface {
+	GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error)
+}
+
+// GenerateNameWithRetry calls the model until a valid suggestion is produced or retries are exhausted.
+func GenerateNameWithRetry(gen Generator, model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string, retries int) (string, error) {
+	if retries < 1 {
+		retries = 1
+	}
+
+	var lastErr error
+	for attempt := 1; attempt <= retries; attempt++ {
+		raw, err := gen.GenerateName(model, temperature, topK, topP, repeatPenalty, content)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if _, err := ValidateSuggestion(raw); err != nil {
+			lastErr = err
+			continue
+		}
+		return raw, nil
+	}
+	return "", fmt.Errorf("model response did not meet naming rules after %d attempt(s): %v", retries, lastErr)
 }
 
 func RenameFile(path, newName string) error {

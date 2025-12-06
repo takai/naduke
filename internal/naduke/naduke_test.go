@@ -182,8 +182,73 @@ func TestGenerateName(t *testing.T) {
 	}
 }
 
+func TestValidateSuggestion(t *testing.T) {
+	t.Parallel()
+
+	valid := []string{"good_name", "abc123", "under_score"}
+	for _, v := range valid {
+		if _, err := ValidateSuggestion(v); err != nil {
+			t.Fatalf("expected valid suggestion %q: %v", v, err)
+		}
+	}
+
+	invalid := []string{
+		"",
+		"has space",
+		"UpperCase",
+		"toolongtoolongtoolongtoolongtool",
+		"with-hyphen",
+		"with.dot",
+	}
+	for _, v := range invalid {
+		if _, err := ValidateSuggestion(v); err == nil {
+			t.Fatalf("expected invalid suggestion %q", v)
+		}
+	}
+}
+
+func TestGenerateNameWithRetry(t *testing.T) {
+	t.Parallel()
+
+	gen := &stubGenerator{
+		responses: []string{"bad name", "good_name"},
+	}
+	raw, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 3)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if raw != "good_name" {
+		t.Fatalf("unexpected suggestion: %q", raw)
+	}
+}
+
+func TestGenerateNameWithRetryFails(t *testing.T) {
+	t.Parallel()
+
+	gen := &stubGenerator{
+		responses: []string{"bad name", "still bad"},
+	}
+	if _, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 2); err == nil {
+		t.Fatalf("expected failure when all attempts invalid")
+	}
+}
+
 type roundTripperFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+type stubGenerator struct {
+	responses []string
+	index     int
+}
+
+func (s *stubGenerator) GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error) {
+	if s.index >= len(s.responses) {
+		return s.responses[len(s.responses)-1], nil
+	}
+	out := s.responses[s.index]
+	s.index++
+	return out, nil
 }
