@@ -22,17 +22,17 @@ go build -o naduke ./cmd/naduke
 naduke [options] FILE...
 ```
 
-Options:
-- `--host` Ollama host (default: `localhost`)
-- `--port` Ollama port (default: `11434`)
-- `--server` Full Ollama server URL (overrides host/port)
-- `--model` Model name (default: `granite4:3b-h`)
-- `--temperature` Sampling temperature (default: `0.0`)
-- `--top_k` Top-k sampling (default: `1`)
-- `--top_p` Top-p sampling (default: `1.0`)
-- `--repeat_penalty` Repeat penalty (default: `1.0`)
-- `--dry-run` Show suggested names without renaming (note: actual rename run may produce a different suggestion because LLM outputs can vary)
-- `-h`, `--help` Show help
+Options (from `naduke -h`):
+- `-host` Ollama host (default: `localhost`)
+- `-port` Ollama port (default: `11434`)
+- `-server` Full Ollama server URL (overrides host/port)
+- `-model` Model name (default: `granite4:3b-h`)
+- `-temperature` Sampling temperature (default: `0.0`)
+- `-top_k` Top-k sampling (default: `1`)
+- `-top_p` Top-p sampling (default: `1.0`)
+- `-repeat_penalty` Repeat penalty (default: `1.0`)
+- `-dry-run` Show suggested names without renaming (note: actual rename run may produce a different suggestion because LLM outputs can vary)
+- `-h`, `-help` Show help
 
 Examples:
 ```sh
@@ -43,7 +43,7 @@ naduke notes/todo.txt
 naduke docs/*.md
 
 # Custom server URL
-naduke --server http://ollama.example.com:11434 draft.txt
+naduke -server http://ollama.example.com:11434 draft.txt
 ```
 
 ## Behavior
