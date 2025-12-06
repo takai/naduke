@@ -32,7 +32,6 @@ Options:
 - `--top_p` Top-p sampling (default: `1.0`)
 - `--repeat_penalty` Repeat penalty (default: `1.0`)
 - `--dry-run` Show suggested names without renaming (note: actual rename run may produce a different suggestion because LLM outputs can vary)
-- `--retries` Max attempts to get a rule-compliant suggestion (default: `0`; set higher to retry on invalid names)
 - `-h`, `--help` Show help
 
 Examples:
@@ -54,7 +53,7 @@ naduke --server http://ollama.example.com:11434 draft.txt
 - Keeps the original extension (e.g., `draft.md` -> `summary.md`).
 - Fails if the destination already exists.
 - Dry-run prints suggestions only; due to LLM variability, a later non-dry run might produce a different name.
-- Validates model output against naming rules (single token, lowercase a-z0-9_, max 30 chars, no extension); retries up to the configured limit if invalid.
+- Validates model output against naming rules (single token, lowercase a-z0-9_, max 30 chars, no extension).
 
 Parameter notes (you do not usually need to change these):
 - `temperature`: Controls randomness/creativity. Higher = more varied suggestions; lower = safer/more deterministic.

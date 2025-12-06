@@ -25,7 +25,6 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 		TopK:          naduke.DefaultTopK,
 		TopP:          naduke.DefaultTopP,
 		RepeatPenalty: naduke.DefaultRepeatPenalty,
-		Retries:       naduke.DefaultRetries,
 		DryRun:        false,
 	}
 
@@ -44,7 +43,6 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 	fs.IntVar(&opts.TopK, "top_k", opts.TopK, "Top-k sampling (default: 1)")
 	fs.Float64Var(&opts.TopP, "top_p", opts.TopP, "Top-p sampling (default: 1.0)")
 	fs.Float64Var(&opts.RepeatPenalty, "repeat_penalty", opts.RepeatPenalty, "Repeat penalty (default: 1.0)")
-	fs.IntVar(&opts.Retries, "retries", opts.Retries, "Max attempts to get a valid suggestion (default: 5)")
 	fs.BoolVar(&opts.DryRun, "dry-run", opts.DryRun, "Show suggested names without renaming")
 
 	if err := fs.Parse(args); err != nil {
@@ -100,7 +98,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		rawName, err := naduke.GenerateNameWithRetry(client, opts.Model, opts.Temperature, opts.TopK, opts.TopP, opts.RepeatPenalty, text, opts.Retries)
+		rawName, err := client.GenerateName(opts.Model, opts.Temperature, opts.TopK, opts.TopP, opts.RepeatPenalty, text)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)

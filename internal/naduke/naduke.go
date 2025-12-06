@@ -23,7 +23,6 @@ const (
 	DefaultTopK          = 1
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
-	DefaultRetries       = 0
 	readChars            = 1000
 )
 
@@ -59,7 +58,6 @@ type Options struct {
 	TopP          float64
 	RepeatPenalty float64
 	DryRun        bool
-	Retries       int
 }
 
 type client struct {
@@ -250,34 +248,6 @@ func ValidateSuggestion(raw string) (string, error) {
 		return "", fmt.Errorf("suggestion %q does not match required pattern %s", trimmed, namePattern.String())
 	}
 	return trimmed, nil
-}
-
-// Generator abstracts model calls for retry logic.
-type Generator interface {
-	GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error)
-}
-
-// GenerateNameWithRetry calls the model until a valid suggestion is produced or retries are exhausted.
-func GenerateNameWithRetry(gen Generator, model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string, retries int) (string, error) {
-	if retries < 1 {
-		retries = 1
-	}
-
-	var lastErr error
-	for attempt := 1; attempt <= retries; attempt++ {
-		raw, err := gen.GenerateName(model, temperature, topK, topP, repeatPenalty, content)
-		if err != nil {
-			return "", err
-		}
-		sanitized := SanitizeName(raw)
-		trimmed, err := ValidateSuggestion(sanitized)
-		if err != nil {
-			lastErr = err
-			continue
-		}
-		return trimmed, nil
-	}
-	return "", fmt.Errorf("model response did not meet naming rules after %d attempt(s): %v", retries, lastErr)
 }
 
 func RenameFile(path, newName string) error {

@@ -3,7 +3,6 @@ package naduke
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -268,77 +267,8 @@ func TestValidateSuggestion(t *testing.T) {
 	}
 }
 
-func TestGenerateNameWithRetry(t *testing.T) {
-	t.Parallel()
-
-	gen := &stubGenerator{
-		responses: []string{"bad name", "good_name"},
-	}
-	raw, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 3)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if raw != "bad_name" {
-		t.Fatalf("unexpected suggestion: %q", raw)
-	}
-	if gen.index != 1 {
-		t.Fatalf("expected to stop after first sanitized suggestion, calls: %d", gen.index)
-	}
-}
-
-func TestGenerateNameWithRetrySanitizesEmptyResult(t *testing.T) {
-	t.Parallel()
-
-	gen := &stubGenerator{
-		responses: []string{"   "},
-	}
-	raw, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 2)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if raw != "file" {
-		t.Fatalf("expected default sanitized name, got %q", raw)
-	}
-}
-
-func TestGenerateNameWithRetryStopsOnModelError(t *testing.T) {
-	t.Parallel()
-
-	gen := &errGenerator{err: errors.New("server error")}
-	if _, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 3); err == nil {
-		t.Fatalf("expected error from model")
-	}
-	if gen.calls != 1 {
-		t.Fatalf("expected 1 call, got %d", gen.calls)
-	}
-}
-
 type roundTripperFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
-}
-
-type stubGenerator struct {
-	responses []string
-	index     int
-}
-
-func (s *stubGenerator) GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error) {
-	if s.index >= len(s.responses) {
-		return s.responses[len(s.responses)-1], nil
-	}
-	out := s.responses[s.index]
-	s.index++
-	return out, nil
-}
-
-type errGenerator struct {
-	err   error
-	calls int
-}
-
-func (e *errGenerator) GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error) {
-	e.calls++
-	return "", e.err
 }
