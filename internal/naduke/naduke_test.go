@@ -14,6 +14,8 @@ import (
 	"unicode/utf8"
 )
 
+const sampleChars = 1000
+
 func TestSanitizeName(t *testing.T) {
 	t.Parallel()
 
@@ -65,7 +67,7 @@ func TestReadSample(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "file.txt")
-	content := strings.Repeat("x", readBytes+10)
+	content := strings.Repeat("x", sampleChars+50)
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
@@ -74,10 +76,10 @@ func TestReadSample(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadSample error: %v", err)
 	}
-	if len(sample) != readBytes {
-		t.Fatalf("expected sample length %d, got %d", readBytes, len(sample))
+	if utf8.RuneCountInString(sample) != sampleChars {
+		t.Fatalf("expected sample length %d chars, got %d", sampleChars, utf8.RuneCountInString(sample))
 	}
-	if sample != content[:readBytes] {
+	if sample != content[:sampleChars] {
 		t.Fatalf("sample does not match expected prefix")
 	}
 }
@@ -88,9 +90,9 @@ func TestReadSampleUTF8Boundary(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "file.txt")
 
-	// Place a multibyte rune so it would be split if we naively cut at readBytes.
-	prefix := strings.Repeat("a", readBytes-1)
-	content := prefix + "é" // 'é' is 2 bytes
+	// Place a multibyte rune on the boundary so naive byte slicing would split it.
+	prefix := strings.Repeat("a", sampleChars-1)
+	content := prefix + "étrail" // 'é' is 2 bytes and is the 1000th character
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
@@ -102,8 +104,11 @@ func TestReadSampleUTF8Boundary(t *testing.T) {
 	if !utf8.ValidString(sample) {
 		t.Fatalf("sample should be valid UTF-8")
 	}
-	if len(sample) != readBytes-1 {
-		t.Fatalf("expected trimmed length %d, got %d", readBytes-1, len(sample))
+	if utf8.RuneCountInString(sample) != sampleChars {
+		t.Fatalf("expected trimmed length %d, got %d", sampleChars, utf8.RuneCountInString(sample))
+	}
+	if !strings.HasSuffix(sample, "é") {
+		t.Fatalf("expected sample to end with full rune 'é', got %q", sample[len(sample)-1:])
 	}
 }
 

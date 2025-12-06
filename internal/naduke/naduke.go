@@ -24,7 +24,7 @@ const (
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
 	DefaultRetries       = 0
-	readBytes            = 1024
+	readChars            = 1000
 )
 
 var (
@@ -186,22 +186,21 @@ func ReadSample(path string) (string, error) {
 	}
 	defer f.Close()
 
-	buf := make([]byte, readBytes+utf8.UTFMax)
-	n, err := f.Read(buf)
-	if err != nil && !errors.Is(err, io.EOF) {
+	buf, err := io.ReadAll(io.LimitReader(f, int64(readChars*utf8.UTFMax)))
+	if err != nil {
 		return "", fmt.Errorf("read file: %w", err)
 	}
 
-	limit := n
-	if limit > readBytes {
-		limit = readBytes
-	}
-	sample := buf[:limit]
-	for len(sample) > 0 && !utf8.Valid(sample) {
-		sample = sample[:len(sample)-1]
+	byteIndex := 0
+	for runeCount := 0; runeCount < readChars && byteIndex < len(buf); runeCount++ {
+		_, size := utf8.DecodeRune(buf[byteIndex:])
+		if size == 0 {
+			break
+		}
+		byteIndex += size
 	}
 
-	return string(sample), nil
+	return string(buf[:byteIndex]), nil
 }
 
 func EnsureTextSample(sample string, path string) (string, error) {
