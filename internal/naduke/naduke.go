@@ -258,14 +258,14 @@ func GenerateNameWithRetry(gen Generator, model string, temperature float64, top
 	for attempt := 1; attempt <= retries; attempt++ {
 		raw, err := gen.GenerateName(model, temperature, topK, topP, repeatPenalty, content)
 		if err != nil {
+			return "", err
+		}
+		trimmed, err := ValidateSuggestion(raw)
+		if err != nil {
 			lastErr = err
 			continue
 		}
-		if _, err := ValidateSuggestion(raw); err != nil {
-			lastErr = err
-			continue
-		}
-		return raw, nil
+		return trimmed, nil
 	}
 	return "", fmt.Errorf("model response did not meet naming rules after %d attempt(s): %v", retries, lastErr)
 }

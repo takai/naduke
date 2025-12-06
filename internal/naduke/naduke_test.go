@@ -3,6 +3,7 @@ package naduke
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -182,6 +183,35 @@ func TestGenerateName(t *testing.T) {
 	}
 }
 
+func TestGenerateNameErrorResponse(t *testing.T) {
+	t.Parallel()
+
+	fakeTransport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		body := `{"error":"invalid character 'i' looking for beginning of object key string"}`
+		return &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Body:       io.NopCloser(strings.NewReader(body)),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	client := &client{
+		http: &http.Client{Transport: fakeTransport},
+		uri:  &url.URL{Scheme: "http", Host: "example.com", Path: "/api/chat"},
+	}
+
+	_, err := client.GenerateName("test-model", 0, 1, 1, 1, "hello")
+	if err == nil {
+		t.Fatalf("expected error from model")
+	}
+	if !strings.Contains(err.Error(), "model request failed (400)") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+	if !strings.Contains(err.Error(), "invalid character 'i'") {
+		t.Fatalf("error message should include server body: %v", err)
+	}
+}
+
 func TestValidateSuggestion(t *testing.T) {
 	t.Parallel()
 
@@ -233,6 +263,18 @@ func TestGenerateNameWithRetryFails(t *testing.T) {
 	}
 }
 
+func TestGenerateNameWithRetryStopsOnModelError(t *testing.T) {
+	t.Parallel()
+
+	gen := &errGenerator{err: errors.New("server error")}
+	if _, err := GenerateNameWithRetry(gen, "model", 0, 1, 1, 1, "text", 3); err == nil {
+		t.Fatalf("expected error from model")
+	}
+	if gen.calls != 1 {
+		t.Fatalf("expected 1 call, got %d", gen.calls)
+	}
+}
+
 type roundTripperFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -251,4 +293,14 @@ func (s *stubGenerator) GenerateName(model string, temperature float64, topK int
 	out := s.responses[s.index]
 	s.index++
 	return out, nil
+}
+
+type errGenerator struct {
+	err   error
+	calls int
+}
+
+func (e *errGenerator) GenerateName(model string, temperature float64, topK int, topP float64, repeatPenalty float64, content string) (string, error) {
+	e.calls++
+	return "", e.err
 }
