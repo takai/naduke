@@ -38,6 +38,7 @@ Options (from `naduke -h`):
 - `-repeat_penalty` Repeat penalty (default: `1.0`)
 - `-dry-run` Show suggested names without renaming (note: actual rename run may produce a different suggestion because LLM outputs can vary)
 - `-prefix` Prefix to prepend to the generated name
+- `-dir` Destination directory for renamed files (default: same as source)
 - `-h`, `-help` Show help
 
 Examples:
@@ -53,6 +54,9 @@ naduke -server http://ollama.example.com:11434 draft.txt
 
 # Add a prefix to suggestions
 naduke -prefix meeting_ notes.txt
+
+# Rename into another directory
+naduke -dir out/ docs/*.md
 ```
 
 ## Behavior
@@ -60,6 +64,7 @@ naduke -prefix meeting_ notes.txt
 - Sends system/user prompts to `/api/chat` (no streaming).
 - Sanitizes model output; if empty after sanitization, uses `file`.
 - Keeps the original extension (e.g., `draft.md` -> `summary.md`).
+- Allows choosing a different destination directory via `-dir`; source file must be reachable and destination dir must exist.
 - Fails if the destination already exists.
 - Dry-run prints suggestions only; due to LLM variability, a later non-dry run might produce a different name.
 - Validates model output against naming rules (single token, lowercase a-z0-9_, max 30 chars, no extension).

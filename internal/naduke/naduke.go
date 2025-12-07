@@ -24,6 +24,7 @@ const (
 	DefaultTopP          = 1.0
 	DefaultRepeatPenalty = 1.0
 	DefaultPrefix        = ""
+	DefaultDir           = ""
 	readChars            = 1000
 )
 
@@ -60,6 +61,7 @@ type Options struct {
 	RepeatPenalty float64
 	DryRun        bool
 	Prefix        string
+	Dir           string
 }
 
 type client struct {
@@ -241,8 +243,11 @@ func ApplyPrefix(prefix, name string) string {
 	return prefix + name
 }
 
-func DestinationPath(path, newName string) string {
-	dir := filepath.Dir(path)
+func DestinationPath(path, newName, destDir string) string {
+	dir := destDir
+	if dir == "" {
+		dir = filepath.Dir(path)
+	}
 	ext := filepath.Ext(path)
 	return filepath.Join(dir, newName+ext)
 }
@@ -260,8 +265,8 @@ func ValidateSuggestion(raw string) (string, error) {
 	return trimmed, nil
 }
 
-func RenameFile(path, newName string) error {
-	destination := DestinationPath(path, newName)
+func RenameFile(path, newName, destDir string) error {
+	destination := DestinationPath(path, newName, destDir)
 
 	absSrc, err := filepath.Abs(path)
 	if err != nil {

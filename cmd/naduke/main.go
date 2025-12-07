@@ -27,6 +27,7 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 		RepeatPenalty: naduke.DefaultRepeatPenalty,
 		DryRun:        false,
 		Prefix:        naduke.DefaultPrefix,
+		Dir:           naduke.DefaultDir,
 	}
 
 	fs := flag.NewFlagSet("naduke", flag.ContinueOnError)
@@ -46,6 +47,7 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 	fs.Float64Var(&opts.RepeatPenalty, "repeat_penalty", opts.RepeatPenalty, "Repeat penalty (default: 1.0)")
 	fs.BoolVar(&opts.DryRun, "dry-run", opts.DryRun, "Show suggested names without renaming")
 	fs.StringVar(&opts.Prefix, "prefix", opts.Prefix, "Prefix to prepend to the generated name")
+	fs.StringVar(&opts.Dir, "dir", opts.Dir, "Destination directory for renamed files (default: same as source)")
 
 	if err := fs.Parse(args); err != nil {
 		return opts, nil, false, fs, err
@@ -53,6 +55,16 @@ func parseArgs(args []string) (naduke.Options, []string, bool, *flag.FlagSet, er
 
 	if *help || *helpShort {
 		return opts, nil, true, fs, nil
+	}
+
+	if opts.Dir != "" {
+		info, err := os.Stat(opts.Dir)
+		if err != nil {
+			return opts, nil, false, fs, fmt.Errorf("destination dir not found: %w", err)
+		}
+		if !info.IsDir() {
+			return opts, nil, false, fs, fmt.Errorf("destination is not a directory: %s", opts.Dir)
+		}
 	}
 
 	files := fs.Args()
@@ -107,14 +119,14 @@ func main() {
 		}
 
 		newName := naduke.ApplyPrefix(opts.Prefix, naduke.SanitizeName(rawName))
-		destination := naduke.DestinationPath(path, newName)
+		destination := naduke.DestinationPath(path, newName, opts.Dir)
 
 		if opts.DryRun {
 			fmt.Printf("%s -> %s\n", path, destination)
 			continue
 		}
 
-		if err := naduke.RenameFile(path, newName); err != nil {
+		if err := naduke.RenameFile(path, newName, opts.Dir); err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
 			os.Exit(1)
 		}

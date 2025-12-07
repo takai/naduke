@@ -145,7 +145,7 @@ func TestRenameFile(t *testing.T) {
 		t.Fatalf("write source: %v", err)
 	}
 
-	if err := RenameFile(src, "renamed"); err != nil {
+	if err := RenameFile(src, "renamed", ""); err != nil {
 		t.Fatalf("rename failed: %v", err)
 	}
 
@@ -164,7 +164,7 @@ func TestRenameFile(t *testing.T) {
 	if err := os.WriteFile(dst, []byte("exists"), 0o644); err != nil {
 		t.Fatalf("write existing dst: %v", err)
 	}
-	if err := RenameFile(src, "renamed"); err == nil {
+	if err := RenameFile(src, "renamed", ""); err == nil {
 		t.Fatalf("expected error when destination exists")
 	}
 }
@@ -173,11 +173,18 @@ func TestDestinationPath(t *testing.T) {
 	t.Parallel()
 
 	path := "/tmp/example/note.txt"
-	dest := DestinationPath(path, "suggested_name")
+	dest := DestinationPath(path, "suggested_name", "")
 
 	want := "/tmp/example/suggested_name.txt"
 	if dest != want {
 		t.Fatalf("DestinationPath = %q; want %q", dest, want)
+	}
+
+	otherDir := "/tmp/other"
+	destWithDir := DestinationPath(path, "suggested_name", otherDir)
+	wantWithDir := "/tmp/other/suggested_name.txt"
+	if destWithDir != wantWithDir {
+		t.Fatalf("DestinationPath with dir = %q; want %q", destWithDir, wantWithDir)
 	}
 }
 
