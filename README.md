@@ -14,6 +14,11 @@ ollama pull granite4:3b-h
 
 ## Installation
 ```sh
+go install github.com/takai/naduke/cmd/naduke@latest
+```
+
+Or build locally:
+```sh
 go build -o naduke ./cmd/naduke
 ```
 

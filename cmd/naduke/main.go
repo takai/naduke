@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"naduke/internal/naduke"
+	"github.com/takai/naduke/internal/naduke"
 )
 
 func usage(fs *flag.FlagSet) func() {
